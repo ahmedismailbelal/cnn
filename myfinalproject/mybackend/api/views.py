@@ -52,22 +52,39 @@ class predict_image(APIView):
             image_instance = image(image=image_data)
             image_instance.save()
             my_map = dict()
-            model = tf.keras.models.load_model('D:\\college\\final project\\back new version\\myfinalproject\\mybackend\\savedModel\\my_model.h5')
+            model = tf.keras.models.load_model('D:\\college\\final project\\back new version\\cnn\\myfinalproject\\mybackend\\savedModel\\my_model.h5')
             my_image, _ = findEcoding(image_instance.image.path)
             my_image = np.array(my_image)
             my_image = np.expand_dims(my_image, axis=0)
             my_image = my_image.reshape(-1, 128, 1) 
-            names = load_labels_from_file("D:\\college\\final project\\back new version\\myfinalproject\\mybackend\\savedModel\\Labels")
-            nums = load_labels_from_file("D:\\college\\final project\\back new version\\myfinalproject\\mybackend\\savedModel\\Labels2")
+            names = load_labels_from_file("D:\\college\\final project\\back new version\\cnn\\myfinalproject\\mybackend\\savedModel\\Labels")
+            nums = load_labels_from_file("D:\\college\\final project\\back new version\\cnn\\myfinalproject\\mybackend\\savedModel\\Labels2")
+            # for i in range(len(nums)):
+            #      my_map[int(nums[i])] = names[i]
+            # predictions = model.predict(my_image)
+            # for i in range(len(predictions)):
+            #     predicted_label = ([np.argmax(predictions[i])])
+            #     print(my_map[predicted_label[0]])
+            my_map = dict()
             for i in range(len(nums)):
                  my_map[int(nums[i])] = names[i]
+
             predictions = model.predict(my_image)
+
+            # Set a threshold for identification
+            threshold = 0.6
+            # image_instance.classification_results = predictions 
+            # image_instance.save()
+            merged_list = []
             for i in range(len(predictions)):
-                predicted_label = ([np.argmax(predictions[i])])
-                print(my_map[predicted_label[0]])
-            image_instance.classification_results = predictions 
-            image_instance.save()
-            merged_list = [my_map[np.argmax(prediction)] for prediction in predictions]
+                predicted_label = np.argmax(predictions[i])
+                confidence = predictions[i][predicted_label]
+        
+                if confidence >= threshold:
+                    merged_list.append(my_map[predicted_label])
+                else:
+                    merged_list.append("Unknown")
+            # merged_list = [my_map[np.argmax(prediction)] for prediction in predictions]
             response_data = {'prediction': merged_list}
             return JsonResponse(response_data)
         else:
